@@ -1,177 +1,145 @@
-# 🩺 Skin Cancer Classification using EfficientNet (HAM10000)
+# 🩺 AI Skin Disease Prediction System (HAM10000)
 
-This project provides a **step-by-step guide** to load a pre-trained skin cancer classification model (`skin_cancer_model_rgb_v2.h5`) and run predictions on single or multiple images from the **HAM10000 dataset** (or your own images).
-
-The model classifies lesions into **7 classes**:
-- Actinic keratoses and intraepithelial carcinoma / Bowen's disease (akiec)
-- Basal cell carcinoma (bcc)
-- Benign keratosis-like lesions (bkl)
-- Dermatofibroma (df)
-- Melanoma (mel)
-- Melanocytic nevi (nv)
-- Vascular lesions (vasc)
-
-> ⚠️ **Disclaimer:** This model is for **educational and research purposes only**. It is **not a medical diagnostic tool**.
+This project is an **AI-based skin cancer classification system** built using **TensorFlow/Keras** and trained on the **HAM10000 dataset**.
+It classifies dermatoscopic images into **7 skin disease categories** using a fine-tuned **EfficientNetB0** model.
 
 ---
 
-## 📦 1. Dependencies & Installation
-
-### 1.1 Recommended Setup (Conda Environment)
-
-Create and activate a new Python environment to avoid dependency conflicts:
-
-```bash
-conda create -n skinenv python=3.10 -y
-conda activate skinenv
-````
-
-### 1.2 Install Required Libraries
-
-Install the necessary packages:
-
-```bash
-pip install --upgrade pip
-pip install tensorflow pillow matplotlib pandas tqdm
-```
-
-### 1.3 Verify Installation
-
-Run:
-
-```bash
-python -c "import tensorflow as tf; print(tf.__version__)"
-```
-
-Make sure TensorFlow loads without errors (should be ≥ 2.14 for Keras 3 compatibility).
-
----
-
-## 📂 2. Project Structure
-
-Your folder should look like this:
+## 📂 Project Structure
 
 ```
-project/
- ├─ skin_cancer_model_rgb_v2.h5       # Pre-trained model file
- ├─ predict.py                        # Main prediction script
- ├─ README.md                         # This file
- └─ HAM10000_images_part_2/           # Folder containing test images
+.
+├── dataset/                # HAM10000 images (download & place here)
+│   ├── train/
+│   ├── val/
+│   └── test/
+├── model.py                # Training script
+├── predict.py              # Prediction script
+├── skin_cancer_model.h5    # Saved trained model
+└── README.md               # This file
 ```
 
 ---
 
-## ▶️ 3. Running Predictions
+## 🛠️ Installation
 
-### 3.1 Predicting a Single Image
-
-Run:
+Make sure you have **Python 3.9+** installed.
+Create a virtual environment (recommended):
 
 ```bash
-python predict.py --image "HAM10000_images_part_2/ISIC_0034264.jpg"
+python -m venv venv
+source venv/bin/activate  # (Linux/Mac)
+venv\Scripts\activate     # (Windows)
 ```
 
-Example Output:
+Then install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### ✅ Required Dependencies
+
+Your `requirements.txt` should include:
 
 ```
-Loading model from skin_cancer_model_rgb_v2.h5 ...
-Model loaded successfully.
-
-Top 3 predictions for: HAM10000_images_part_2/ISIC_0034264.jpg
-  Melanocytic nevi (nv): 85.23%
-  Benign keratosis-like lesions (bkl): 10.14%
-  Melanoma (mel): 4.63%
+tensorflow>=2.15
+keras>=3.0
+numpy>=1.26
+pandas>=2.0
+matplotlib>=3.8
+scikit-learn>=1.3
+opencv-python>=4.9
+Pillow>=10.0
+h5py>=3.10
 ```
+
+These cover:
+
+* **TensorFlow/Keras** – model training, EfficientNetB0, saving/loading
+* **NumPy/Pandas** – data manipulation
+* **Matplotlib** – visualizing training performance
+* **scikit-learn** – metrics, confusion matrix
+* **OpenCV** – image loading and resizing
+* **Pillow** – image preprocessing
+* **h5py** – for `.h5` model saving/loading
 
 ---
 
-### 3.2 Predicting an Entire Folder
+## 📥 Dataset Setup
 
-To classify all images in a folder and save results to a CSV file:
+1. Download **HAM10000 dataset** from [Kaggle](https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000).
+2. Organize into the following folder structure:
+
+```
+dataset/
+├── train/
+│   ├── akiec/
+│   ├── bcc/
+│   ├── bkl/
+│   ├── df/
+│   ├── mel/
+│   ├── nv/
+│   └── vasc/
+├── val/
+│   └── (same subfolders as train)
+└── test/
+    └── (same subfolders as train)
+```
+
+Recommended split:
+
+* **70% train**, **20% validation**, **10% test**
+
+---
+
+## 🏋️ Training the Model
+
+Run the training script:
 
 ```bash
-python predict.py --folder "HAM10000_images_part_2" --csv results.csv
+python model.py
 ```
 
 This will:
 
-* Process all `.jpg`, `.jpeg`, `.png` files inside the folder.
-* Print top-3 predictions for each image.
-* Save results to `results.csv` in the current folder.
-
-Sample `results.csv` output:
-
-| filename         | top1_name             | top1_prob | top2_name                           | top2_prob | top3_name                           | top3_prob |
-| ---------------- | --------------------- | --------- | ----------------------------------- | --------- | ----------------------------------- | --------- |
-| ISIC_0034264.jpg | Melanocytic nevi (nv) | 0.8523    | Benign keratosis-like lesions (bkl) | 0.1014    | Melanoma (mel)                      | 0.0463    |
-| ISIC_0025789.jpg | Melanoma (mel)        | 0.7021    | Melanocytic nevi (nv)               | 0.2123    | Benign keratosis-like lesions (bkl) | 0.0856    |
+* Load and preprocess RGB images (224×224)
+* Train **EfficientNetB0** (ImageNet-pretrained)
+* Freeze base layers, fine-tune classifier
+* Save the trained model as `skin_cancer_model.h5`
 
 ---
 
-## 🏷️ 4. Class Labels
+## 🔮 Running Predictions
 
-| Index | Full Name                                                         | Short   |
-| ----: | ----------------------------------------------------------------- | ------- |
-|     0 | Actinic keratoses and intraepithelial carcinoma / Bowen's disease | `akiec` |
-|     1 | Basal cell carcinoma                                              | `bcc`   |
-|     2 | Benign keratosis-like lesions                                     | `bkl`   |
-|     3 | Dermatofibroma                                                    | `df`    |
-|     4 | Melanoma                                                          | `mel`   |
-|     5 | Melanocytic nevi                                                  | `nv`    |
-|     6 | Vascular lesions                                                  | `vasc`  |
+Once the model is trained, run predictions with:
 
----
-
-## 📜 5. Training Summary (Optional)
-
-The model was trained using **EfficientNetV2B0** with:
-
-* **Image size:** 224x224 RGB
-* **Optimizer:** Adam
-* **Loss:** Categorical Crossentropy
-* **Callbacks:** EarlyStopping, ModelCheckpoint
-* **Augmentation:** Rotation, shift, zoom, horizontal flip
-
-Saved as a `.h5` file for easy loading in Keras 3.
-
----
-
-## 🧠 6. Notes
-
-* Predictions are probabilities from the softmax output.
-* If you get **low accuracy**, retrain the model or fine-tune with more data.
-* Ensure your input image size matches training size (224×224).
-* This code works on CPU and GPU (if TensorFlow GPU is installed).
-
----
-
-## 🛠️ 7. Troubleshooting
-
-| Problem                                   | Solution                                                                                                           |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `OSError: SavedModel file does not exist` | Make sure you use `tf.keras.models.load_model("skin_cancer_model_rgb_v2.h5")` with `.h5` models (not `TFSMLayer`). |
-| `ValueError: File format not supported`   | Use `.h5` or `.keras` models with Keras 3. Re-save your model if needed.                                           |
-| SSE/AVX warnings                          | These are CPU optimization hints. Ignore unless you want to build TensorFlow from source.                          |
-| Slow predictions                          | Install TensorFlow GPU if you have an NVIDIA GPU + CUDA support.                                                   |
-
----
-
-## 🧾 8. Example Execution Flow
-
-1. **Clone/Download the project.**
-2. **Create a virtual environment & install dependencies.**
-3. Place `skin_cancer_model_rgb_v2.h5` in the project folder.
-4. Put test images inside a folder (e.g., `HAM10000_images_part_2`).
-5. Run predictions for a single image or the entire folder.
-6. (Optional) Export results to a CSV for further analysis.
-
----
-
-## 👨‍💻 Author
-
-Maintained by **Siddarth (Engineer)** — feel free to fork and modify this project for research and learning purposes.
-
+```bash
+python predict.py --image path_to_image.jpg
 ```
 
+This will:
+
+* Load the saved model
+* Preprocess the image
+* Output predicted class and confidence
+
 ---
 
+## 📊 Expected Results
+
+* **Accuracy:** ~80–85% (depends on epochs and dataset split)
+* **Input Size:** `224x224x3` (RGB)
+* **Output Classes:** 7 (akiec, bcc, bkl, df, mel, nv, vasc)
+
+---
+
+## ⚠️ Notes
+
+* Always use **RGB mode** (`color_mode='rgb'`) to avoid weight shape mismatch errors.
+* Use `.h5` or `.keras` format for saving models with Keras 3.
+* If using a GPU, ensure **CUDA/cuDNN** are installed for faster training.
+
+---
+
+Would you like me to generate a **ready-to-use `requirements.txt` file** with these exact dependencies (with versions pinned for compatibility) so you can just install it directly?
